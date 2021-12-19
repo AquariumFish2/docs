@@ -12,3 +12,7 @@ List<String> states = [
   'شبين',
   'الخانكة',
 ];
+List<String> team = [
+  'صيدلة',
+  'طب',
+];

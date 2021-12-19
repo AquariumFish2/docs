@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:sample/helper.dart';
 import 'package:sample/screens/docscreen/add_doc.dart';
 
 class DocSample extends StatefulWidget {
   const DocSample({
     Key? key,
-    required this.cont,
     required this.docName,
     required this.agreed,
     required this.docType,
@@ -15,7 +13,6 @@ class DocSample extends StatefulWidget {
     this.hint,
     this.patients,
   }) : super(key: key);
-  final contactType cont;
   final String docName;
   final String id;
   final String? docNum;
@@ -34,7 +31,6 @@ class _DocSampleState extends State<DocSample> {
 
   @override
   Widget build(BuildContext context) {
-    Size size = MediaQuery.of(context).size;
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300), curve: Curves.bounceOut,
       margin: const EdgeInsets.symmetric(vertical: 15, horizontal: 5),

@@ -1,9 +1,8 @@
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sample/screens/app_bar_button.dart';
 import 'package:sample/screens/docscreen/add_doc.dart';
-import 'package:sample/provider/doc.dart';
-import '../../helper.dart';
 import 'widgets/doc_sample.dart';
 
 class DocList extends StatelessWidget {
@@ -11,16 +10,15 @@ class DocList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final docs = Provider.of<Doc>(context);
     //contactType _contactType;
     return Scaffold(
       appBar: AppBar(
         title: const Text('الدكاترة'),
         actions: [
           AppBarButton(
-            onPressed:()=> Navigator.of(context).push(
+            onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (context) =>  AddDoctor(),
+                builder: (context) => AddDoctor(),
               ),
             ),
           )
@@ -57,21 +55,36 @@ class DocList extends StatelessWidget {
                 ],
               ),
             ),
-            Column(
-              children: docs.doctors
-                  .map((e) => DocSample(
-                    id: e['id'] as String,
-                        cont: e['cont'] as contactType,
-                        docName: e['name'] as String,
-                        agreed: e['agreed'] as bool,
-                        docType: e['type'] as String,
-                        hint: e['hint'] as String?,
-                        docEmail: e['email'] as String?,
-                        docNum: e['phone'] as String?,
-                        patients: (e['patients'] as List?),
-                      ))
-                  .toList(),
-            )
+            StreamBuilder(
+                stream: FirebaseFirestore.instance
+                    .collection('doctors')
+                    .get()
+                    .asStream(),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+
+                  // Map<String,Object> data=snapshot.data!.docs.forEach((element) { });
+                  if (snapshot.hasData) {
+                    return Column(
+                        children: snapshot.data!.docs
+                            .map((DocumentSnapshot document) {
+                      final Map<String, dynamic> data =
+                          document.data() as Map<String, dynamic>;
+                      return DocSample(
+                        docName: data['name'],
+                        agreed: data['agreed'],
+                        docType: data['type'],
+                        id: document.id,
+                        docNum: document['phone'],
+                        hint: document['hint'],
+                        patients: document['patients'],
+                      );
+                    }).toList());
+                  }
+                  return const Text('لا توجد دكاتره');
+                })
           ],
         ),
       ),

@@ -1,7 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'package:sample/helper.dart';
-import 'package:sample/provider/doc.dart';
 import 'package:sample/screens/patientscreen/add_patient_screen/widgets/add_patient_text_field.dart';
 
 // ignore: must_be_immutable
@@ -33,19 +32,18 @@ class _AddDoctorState extends State<AddDoctor> {
   void didChangeDependencies() {
     if (once) {
       if (widget.id != null) {
-        final prov = Provider.of<Doc>(context);
-        final docs = prov.doctors;
-        final i = docs.indexWhere((element) => element['id'] == widget.id);
-        docNameController.text = docs[i]['name'] as String;
-        if (docs[i]['phone'] == null) {
-          value = false;
-          docEmailController.text = docs[i]['email'] as String;
-        } else {
-          docPhoneController.text = docs[i]['phone'] as String;
-        }
-        val = docs[i]['type'] as String;
-        agreed = docs[i]['agreed'] as bool;
-        hintController.text = docs[i]['hint'] as String;
+        final database = FirebaseFirestore.instance;
+        database.collection('doctors').doc(widget.id).get().then((value) {
+          agreed = value['agreed'];
+          docNameController.text = value['name'];
+          if (value['phone'] != null) {
+            docPhoneController.text = value['phone'];
+          } else {
+            docEmailController.text = value['email'];
+          }
+          hintController.text = value['hint'];
+          val = value['type'];
+        });
       }
     }
     super.didChangeDependencies();
@@ -53,7 +51,6 @@ class _AddDoctorState extends State<AddDoctor> {
 
   @override
   Widget build(BuildContext context) {
-    final prov = Provider.of<Doc>(context, listen: false);
     Size size = MediaQuery.of(context).size;
     void save() {
       setState(() {
@@ -63,20 +60,8 @@ class _AddDoctorState extends State<AddDoctor> {
       if (val != null && validate) {
         toAdd['type'] = val as String;
         toAdd['agreed'] = agreed;
-
-        if (value == true) {
-          toAdd['cont'] = contactType.phone;
-        } else {
-          toAdd['cont'] = contactType.email;
-        }
-        toAdd['id'] = DateTime.now().toIso8601String();
+        FirebaseFirestore.instance.collection('doctors').add(toAdd);
         key.currentState!.save();
-        if (widget.id == null) {
-          prov.add(toAdd);
-        } else {
-          prov.delete(widget.id as String);
-          prov.add(toAdd);
-        }
         Navigator.of(context).pop();
       }
     }

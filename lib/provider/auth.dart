@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/cupertino.dart';
 
 class Auth extends ChangeNotifier {
@@ -6,18 +7,31 @@ class Auth extends ChangeNotifier {
   late String _email;
   late String _password;
   final auth = FirebaseAuth.instance;
+  final database = FirebaseDatabase.instance;
   void setEmail(email) {
     _email = email;
   }
+
   void setPassword(password) {
     _password = password;
   }
 
-  void signIn() {
-    auth.signInWithEmailAndPassword(email: _email, password: _password);
+  void signIn() async {
+    await auth.signInWithEmailAndPassword(email: _email, password: _password);
   }
 
-  void register() {
-    auth.createUserWithEmailAndPassword(email: _email, password: _password);
+  void register(String userName, String userPhone, String team) async {
+    await auth.createUserWithEmailAndPassword(
+        email: _email, password: _password);
+    await database.ref().child('vol').child(team).child(auth.currentUser!.uid).set({
+      'userName': userName,
+      'phone': userPhone,
+      'id': DateTime.now().toString(),
+      'email': _email,
+    });
+  }
+
+  void guest() {
+    auth.signInAnonymously();
   }
 }

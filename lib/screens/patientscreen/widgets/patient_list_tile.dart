@@ -1,4 +1,6 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class PatientListTile extends StatefulWidget {
   const PatientListTile({
@@ -14,7 +16,7 @@ class PatientListTile extends StatefulWidget {
     required this.date,
   }) : super(key: key);
   final String name;
-  final String date;
+  final Timestamp date;
   final String phone;
   final String adress;
   final String source;
@@ -29,6 +31,7 @@ class PatientListTile extends StatefulWidget {
 
 class _PatientListTileState extends State<PatientListTile> {
   bool openDetails = false;
+  late Timestamp time;
 
   @override
   Widget build(BuildContext context) {
@@ -51,10 +54,13 @@ class _PatientListTileState extends State<PatientListTile> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(widget.name),
-                      Text(widget.date),
+                      Text(DateFormat('dd/MM/yyyy').format(
+                          Timestamp.fromMillisecondsSinceEpoch(
+                                  widget.date.seconds * 1000)
+                              .toDate())),
                     ],
                   ),
-                  Text(widget.source),
+                  Text(widget.phone),
                   Text(widget.vol),
                 ],
               ),
@@ -63,8 +69,8 @@ class _PatientListTileState extends State<PatientListTile> {
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
+                    Text(widget.source),
                     Text(widget.adress),
-                    Text(widget.phone),
                     if (widget.latest != '') Text(widget.latest as String),
                     if (widget.illness != '') Text(widget.illness as String)
                   ],

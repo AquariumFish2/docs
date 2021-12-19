@@ -1,8 +1,11 @@
+import 'dart:math';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import 'package:sample/provider/doc.dart';
-import 'package:sample/provider/pati.dart';
+
 import 'package:sample/screens/patientscreen/add_patient_screen/widgets/add_patient_text_field.dart';
+import 'package:sample/screens/patientscreen/add_patient_screen/widgets/dropdown.dart';
+import 'package:sample/screens/patientscreen/add_patient_screen/widgets/illness.dart';
 
 class AddPatientPage extends StatefulWidget {
   const AddPatientPage({Key? key}) : super(key: key);
@@ -24,9 +27,11 @@ class _AddPatientPageState extends State<AddPatientPage> {
 
   final TextEditingController volNameController = TextEditingController();
 
-  final TextEditingController ilnessController = TextEditingController();
+  final TextEditingController illnessController = TextEditingController();
 
   final TextEditingController latestController = TextEditingController();
+
+  final TextEditingController illnessValueController = TextEditingController();
 
   final Key patientNameKey = const Key('patientName');
 
@@ -44,24 +49,23 @@ class _AddPatientPageState extends State<AddPatientPage> {
 
   String? value;
 
+  String? volValue;
+
   @override
   Widget build(BuildContext context) {
-    final docs = Provider.of<Doc>(context);
-    final patients = Provider.of<PatientProv>(context, listen: false);
     Map<String, Object> newPatient = {};
-    void save() {
+    void save() async {
       if (fkey.currentState!.validate()) {
-        if (value == null) {
-          newPatient['Doctor'] = false;
-        } else {
-          int i =
-              docs.doctors.indexWhere((element) => element['name'] == value);
-          newPatient['Doctor'] = true;
-          newPatient['date'] = DateTime.now();
-          (docs.doctors[i]['patients'] as List).add(newPatient);
-          fkey.currentState!.save();
-        }
-        patients.addPatient(newPatient);
+        if (value != null) newPatient['Doctor'] = value as String;
+        if (volValue != null) newPatient['volName'] = volValue as String;
+        newPatient['date'] = DateTime.now();
+
+        fkey.currentState!.save();
+        // await FirebaseFirestore.instance
+        //     .collection('doctors')
+        //     .doc()
+        //     .update(newPatient);
+        await FirebaseFirestore.instance.collection('patients').add(newPatient);
         Navigator.pop(context);
       }
     }
@@ -119,24 +123,24 @@ class _AddPatientPageState extends State<AddPatientPage> {
                   if (v.length < 4) return 'ادخل اسم صحيح';
                 },
               ),
-              AddPatientTextField(
-                label: 'اسم المتابع',
-                controller: volNameController,
-                tKey: volNameKey,
-                multiline: false,
-                save: (v) => newPatient['volName'] = v,
-                validate: (v) {
-                  if (v.length < 4) return 'ادخل اسم مناسب';
-                },
+              Row(
+                children: [
+                  DropDown(
+                    path: 'doctors',
+                    text: 'اختر الطبيب المتابع',
+                    value: value,
+                  ),
+                  DropDown(
+                    text: 'اختر المتطوع المتابع',
+                    path: 'volanteers',
+                    value: volValue,
+                  )
+                ],
               ),
-              AddPatientTextField(
-                label: 'التشخيص',
-                controller: ilnessController,
-                tKey: ilnessKey,
-                multiline: true,
-                save: (v) => newPatient['illness'] = v,
-                validate: (v) {},
-              ),
+              const Text('التشخيص'),
+              Ilness(
+                  illnessController: illnessController,
+                  illnessValueController: illnessValueController),
               AddPatientTextField(
                 label: 'اخر ما وصلناله',
                 controller: latestController,
@@ -145,33 +149,8 @@ class _AddPatientPageState extends State<AddPatientPage> {
                 save: (v) => newPatient['latest'] = v,
                 multiline: true,
               ),
-              Card(
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    side:
-                        const BorderSide(width: 1, color: Colors.greenAccent)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: DropdownButton(
-                    isDense: true,
-                    hint: const Text('اختر الطبيب المتابع'),
-                    value: value,
-                    underline: Container(),
-                    onChanged: (v) => setState(() {
-                      value = v as String;
-                    }),
-                    items: docs.doctors.map(
-                      (e) {
-                        return DropdownMenuItem(
-                          child: Text(e['name'] as String),
-                          value: e['name'],
-                        );
-                      },
-                    ).toList(),
-                  ),
-                ),
-              ),
-              ElevatedButton(onPressed: save, child: const Text('save'))
+              ElevatedButton(onPressed: save, child: const Text('save')),
+              Text(Random(15).nextInt(1<<32).toString())
             ],
           ),
         ),
